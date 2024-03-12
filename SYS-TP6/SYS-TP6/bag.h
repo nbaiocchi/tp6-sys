@@ -11,6 +11,9 @@ typedef struct {
     int     size;      // number of elements currently in the bag
 
     int is_closed;     // boolean. cf last exercice
+    sem_t semaphore;
+    sem_t semaphore2;
+    sem_t mutex;
 } bag_t ;
 
 // Create a new bag with room for 'capacity' elements

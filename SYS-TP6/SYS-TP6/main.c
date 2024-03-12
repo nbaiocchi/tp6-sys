@@ -10,6 +10,7 @@
 // shared variables
 int sum;
 bag_t *bag;
+sem_t mutex;
 
 // each consumer thread runs this function
 void *consumer(void *arg)
@@ -22,7 +23,11 @@ void *consumer(void *arg)
         int *box = bb_take(bag);
         assert( box != NULL );
 
+        sem_wait(&mutex);
+
         sum = sum + *box;
+
+        sem_post(&mutex);
         
         free(box);
     }
@@ -60,6 +65,7 @@ int main(int argc, char ** argv)
 
     pthread_t prod[N];
     pthread_t cons[N];
+    sem_init(&mutex, 0, 1);
 
     int S = atoi( argv[2] );
     assert( S > 0 );
@@ -70,6 +76,7 @@ int main(int argc, char ** argv)
     sum=0;
 
     int r;
+    
     for(int pnum = 0 ; pnum < N ; pnum++)
     {
         int *thread_arg=malloc(sizeof(int));
@@ -80,7 +87,7 @@ int main(int argc, char ** argv)
             printf("error: could not spawn producer %d\n",pnum);
             exit(1);
         }
-    } 
+    }
     for(int cnum = 0 ; cnum < N ; cnum++)
     {
         int *thread_arg=malloc(sizeof(int));
@@ -93,7 +100,13 @@ int main(int argc, char ** argv)
         }
     }
 
-    
+    for(int pnum = 0 ; pnum < N ; pnum++)
+    {
+        printf("joining producer %d\n",pnum);
+        pthread_join(prod[pnum], NULL);
+        printf("producer %d joined\n",pnum);
+    }
+
     printf("theroretical result=%d\n",N*(N+1)/2);
     printf("actual computed sum=%d\n", sum);
     return 0;
